@@ -8,26 +8,58 @@ from openpyxl import load_workbook
 
 class DownloadHandler(FileSystemEventHandler):
     def on_created(self, event):
-        # Only process files, not directories
-        if not event.is_directory:
-            file_path = Path(event.src_path)
-            file_extension = file_path.suffix.lower()
-            if  file_extension in [".xlsx",".xlsm"]:
-                wb=load_workbook(file_path)
-                ws=wb.active
-                template_name=str(ws['b4'].value)
-                prefix=""
-                match template_name:
-                    case "GOVERNANCE MODEL":
-                        prefix="gov_"
-                print(template_name)
-                file_path.rename(file_path.parent / (prefix+str(file_path.name )))
+        try:
+            # Only process files, not directories
+            if not event.is_directory:
+                file_path = Path(event.src_path)
+                file_extension = file_path.suffix.lower()
+                if  file_extension in [".xlsx",".xlsm"]:
+                    wb=load_workbook(file_path)
+                    ws=wb.active
+                    template_name=str(ws['b4'].value)
+                    domain_name=str(ws['b8'].value)
+                    prefix=""
+                    match template_name:
+                        case "GOVERNANCE MODEL":
+                            prefix="gov_"
+                        case "TAXONOMY APP MODEL":
+                            prefix="tax_"
+                        case "WORKFLOW APP MODEL":
+                            prefix="wfm_"
+                        case "INSTANCE DATA MODEL":
+                            prefix="ins_"
+                        case "AUTHORIZATION MODEL":
+                            prefix="auth_"
+                        case "KNOWLEDGE DATA MODEL":
+                            prefix="kbm_"
+                        case "RS EXCEL":
+                            prefix="data_"
+                        case "BASE DATA MODEL":
+                            match domain_name:
+                                case "thing":
+                                    prefix="thg_"
+                                case "referenceData":
+                                    prefix="ref_"                                                  
+                                case "UOMData":
+                                    prefix="uom_"
+                                case "digitalAsset":
+                                    prefix="dam_"
+
+                    print(f"New file detected: {file_path.name}")
+                    print(f"Template name: {template_name}")
+                    if template_name=="BASE DATA MODEL":
+                        print(f"Domain name: {domain_name}")
+                    print(f"Prefix: {prefix}")
+                    print("-" * 50)    
+                    file_path.rename(file_path.parent / (prefix+str(file_path.name )))
 
 
-            # print(f"New file detected: {file_path.name}")
-            # print(f"Extension: {file_extension if file_extension else 'No extension'}")
-            # print(f"Full path: {file_path}")
-            # print("-" * 50)
+                # print(f"New file detected: {file_path.name}")
+                # print(f"Extension: {file_extension if file_extension else 'No extension'}")
+                # print(f"Full path: {file_path}")
+                # print("-" * 50)
+        except:
+            print("some file caused some error")
             
             
  
