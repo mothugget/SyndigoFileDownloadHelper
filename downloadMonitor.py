@@ -3,6 +3,8 @@ import time
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from openpyxl import load_workbook
+
 
 class DownloadHandler(FileSystemEventHandler):
     def on_created(self, event):
@@ -10,22 +12,25 @@ class DownloadHandler(FileSystemEventHandler):
         if not event.is_directory:
             file_path = Path(event.src_path)
             file_extension = file_path.suffix.lower()
+            if  file_extension in [".xlsx",".xlsm"]:
+                wb=load_workbook(file_path)
+                ws=wb.active
+                template_name=str(ws['b4'].value)
+                prefix=""
+                match template_name:
+                    case "GOVERNANCE MODEL":
+                        prefix="gov_"
+                print(template_name)
+                file_path.rename(file_path.parent / (prefix+str(file_path.name )))
+
+
+            # print(f"New file detected: {file_path.name}")
+            # print(f"Extension: {file_extension if file_extension else 'No extension'}")
+            # print(f"Full path: {file_path}")
+            # print("-" * 50)
             
-            print(f"New file detected: {file_path.name}")
-            print(f"Extension: {file_extension if file_extension else 'No extension'}")
-            print(f"Full path: {file_path}")
-            print("-" * 50)
             
-            # Optional: Log to file
-            self.log_to_file(file_path.name, file_extension)
-    
-    def log_to_file(self, filename, extension):
-        """Optional: Save file info to a log file"""
-        log_path = Path.home() / "download_monitor.log"
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(f"{timestamp} - {filename} - {extension}\n")
+ 
 
 def get_downloads_directory():
     """Get the user's downloads directory"""
@@ -61,14 +66,14 @@ def main():
     
     # Start monitoring
     observer.start()
-    
+
     try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nStopping monitor...")
         observer.stop()
-    
+
     observer.join()
     print("Monitor stopped.")
 
