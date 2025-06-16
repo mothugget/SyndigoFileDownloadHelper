@@ -8,6 +8,7 @@ import zipfile
 import xml.etree.ElementTree as ET
 import shutil
 import time
+from lxml import etree as ET
 
 
 class DownloadHandler(FileSystemEventHandler):
@@ -69,14 +70,13 @@ class DownloadHandler(FileSystemEventHandler):
             print("some file caused some error")
             print(e)
 
+from lxml import etree as ET
+
 def disable_window_protection_in_sheetview(xlsx_path):
     xlsx_path = Path(xlsx_path)
     temp_dir = Path("temp_unzip")
     if temp_dir.exists():
         shutil.rmtree(temp_dir)
-
-    # Register namespace globally
-    ET.register_namespace('', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main')
 
     # Step 1: Unzip workbook
     with zipfile.ZipFile(xlsx_path, 'r') as zip_ref:
@@ -85,17 +85,20 @@ def disable_window_protection_in_sheetview(xlsx_path):
     # Step 2: Modify sheet XML files
     sheet_dir = temp_dir / 'xl' / 'worksheets'
     for fpath in sheet_dir.glob('sheet*.xml'):
-        tree = ET.parse(fpath)
+        parser = ET.XMLParser(remove_blank_text=False)
+        tree = ET.parse(str(fpath), parser)
         root = tree.getroot()
 
-        ns = {'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
-        sheet_view = root.find('./main:sheetViews/main:sheetView', ns)
+        ns = {
+            'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+        }
+        sheet_view = root.find('.//main:sheetView', namespaces=ns)
         if sheet_view is not None and 'windowProtection' in sheet_view.attrib:
-            sheet_view.set('windowProtection', '0')
+            del sheet_view.attrib['windowProtection']
             print(f"✅ Removed windowProtection in {fpath.name}")
-            tree.write(fpath, encoding='utf-8', xml_declaration=True)
+            tree.write(str(fpath), encoding='utf-8', xml_declaration=True, pretty_print=False)
 
-    #  Step 3: Repackage with fully sorted file paths
+    # Step 3: Repackage
     new_file = xlsx_path.with_name(f"{xlsx_path.stem}_unprotected.xlsx")
     with zipfile.ZipFile(new_file, 'w', zipfile.ZIP_DEFLATED) as zf:
         for file_path in sorted(temp_dir.rglob("*")):
