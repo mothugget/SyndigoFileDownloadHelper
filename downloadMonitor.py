@@ -58,7 +58,7 @@ class DownloadHandler(FileSystemEventHandler):
                         print(f"Template name: {template_name}")
                         if base_model:
                             print(f"Domain name: {domain_name}")
-                            # disable_window_protection_in_sheetview(new_file_path)
+                            disable_window_protection_in_sheetview(new_file_path)
                         print(f"Prefix: {prefix}")
                         print(f"New filename: {new_file_path.name}")
                         
@@ -95,17 +95,16 @@ def disable_window_protection_in_sheetview(xlsx_path):
             print(f"✅ Removed windowProtection in {fpath.name}")
             tree.write(fpath, encoding='utf-8', xml_declaration=True)
 
-    # Step 3: Repackage into a new .xlsx file
+    #  Step 3: Repackage with fully sorted file paths
     new_file = xlsx_path.with_name(f"{xlsx_path.stem}_unprotected.xlsx")
     with zipfile.ZipFile(new_file, 'w', zipfile.ZIP_DEFLATED) as zf:
-        for foldername, _, filenames in os.walk(temp_dir):
-            for filename in filenames:
-                full_path = os.path.join(foldername, filename)
-                arcname = os.path.relpath(full_path, temp_dir)
-                zf.write(full_path, arcname)
+        for file_path in sorted(temp_dir.rglob("*")):
+            if file_path.is_file():
+                arcname = file_path.relative_to(temp_dir)
+                zf.write(file_path, arcname)
 
     # Step 4: Cleanup
-    shutil.rmtree(temp_dir)  
+    shutil.rmtree(temp_dir)
     print(f"🎉 Window protection removed. File saved as: {new_file}")
 
 
