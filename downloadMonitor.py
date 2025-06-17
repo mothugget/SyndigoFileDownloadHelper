@@ -70,8 +70,6 @@ class DownloadHandler(FileSystemEventHandler):
             print("some file caused some error")
             print(e)
 
-from lxml import etree as ET
-
 def disable_window_protection_in_sheetview(xlsx_path):
     xlsx_path = Path(xlsx_path)
     temp_dir = Path("temp_unzip")
