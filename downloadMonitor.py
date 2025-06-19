@@ -30,6 +30,17 @@ class DownloadHandler(FileSystemEventHandler):
         
     def on_moved(self, event):
         print(f"📦 File moved: {event.src_path} -> {event.dest_path}")
+        # Process the destination file if it's a complete download
+        if not event.is_directory and event.dest_path.endswith('.xlsx'):
+            # Create a mock event for the destination file
+            class MockEvent:
+                def __init__(self, path):
+                    self.src_path = path
+                    self.is_directory = False
+            
+            new_filename = self.process_file(MockEvent(event.dest_path))
+            if new_filename:
+                print(f"📝 File renamed via move event: {event.dest_path} -> {new_filename}")
         
     def process_file(self, event):
         """Process a file and return the new filename if renamed, None otherwise"""
@@ -64,7 +75,7 @@ class DownloadHandler(FileSystemEventHandler):
             },
             "thing": {
                 "prefix": "thg_", 
-                "filename": os.getenv('THING_FILENAME', 'thing_data')
+                "filename": os.getenv('THING_MODEL_FILENAME', 'thing_model')
             },
             "referenceData": {
                 "prefix": "ref_", 
@@ -329,9 +340,18 @@ def main():
     
     print(f"✅ Successfully found downloads directory: {downloads_dir}")
     
-    # Check if we're in WSL
-    is_wsl = "microsoft" in os.uname().release.lower() or "wsl" in os.uname().release.lower()
-    is_windows_path = downloads_dir.startswith("/mnt/")
+    # Check if we're in WSL - handle Windows compatibility
+    is_wsl = False
+    is_windows_path = False
+    
+    try:
+        # Try Unix-style OS detection (works on Linux/macOS/WSL)
+        uname_info = os.uname().release.lower()
+        is_wsl = "microsoft" in uname_info or "wsl" in uname_info
+        is_windows_path = downloads_dir.startswith("/mnt/")
+    except AttributeError:
+        # Windows doesn't have os.uname(), detect Windows paths instead
+        is_windows_path = len(downloads_dir) > 1 and downloads_dir[1] == ':'
     
     if is_wsl and is_windows_path:
         print("🐧 WSL + Windows path detected, using polling method...")
