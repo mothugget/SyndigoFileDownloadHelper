@@ -97,11 +97,15 @@ class DownloadHandler(FileSystemEventHandler):
                 file_extension = file_path.suffix.lower()
                 already_has_prefix=has_known_prefix(file_path.name,MODEL_CONFIGS)
                 
+                # Skip files that contain timestamp suffixes (already processed)
+                has_timestamp_suffix = "_" in file_path.stem and file_path.stem.split("_")[-1].isdigit()
+                
                 print(f"📄 Processing file: {file_path.name}")
                 print(f"   Extension: {file_extension}")
                 print(f"   Has prefix: {already_has_prefix}")
+                print(f"   Has timestamp suffix: {has_timestamp_suffix}")
                 
-                if  file_extension in [".xlsx",".xlsm"] and not already_has_prefix:
+                if  file_extension in [".xlsx",".xlsm"] and not already_has_prefix and not has_timestamp_suffix:
                     print("   ✅ File matches criteria, processing...")
                     wb=load_workbook(file_path)
                     ws=wb.active
@@ -136,7 +140,9 @@ class DownloadHandler(FileSystemEventHandler):
                             new_file_path = file_path.parent / new_filename
                         
                         if new_file_path.exists():
-                            new_file_path = add_suffix_to_filename(new_file_path, str(time.time())[-6:])
+                            # Add a suffix that won't trigger reprocessing
+                            timestamp_suffix = "_" + str(time.time())[-6:]
+                            new_file_path = add_suffix_to_filename(new_file_path, timestamp_suffix)
                         
                         file_path.rename(new_file_path)                        
                         print(f"Template name: {template_name}")
