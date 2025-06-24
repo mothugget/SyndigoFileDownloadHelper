@@ -70,47 +70,47 @@ class DownloadHandler(FileSystemEventHandler):
         """Process a file and return the new filename if renamed, None otherwise"""
         MODEL_CONFIGS = {
             "GOVERNANCE MODEL": {
-                "prefix": "gov_", 
+                "prefix": os.getenv('GOVERNANCE_MODEL_PREFIX', 'gov_'), 
                 "filename": os.getenv('GOVERNANCE_MODEL_FILENAME', 'governance_model')
             },
             "TAXONOMY APP MODEL": {
-                "prefix": "tax_", 
+                "prefix": os.getenv('TAXONOMY_APP_MODEL_PREFIX', 'tax_'), 
                 "filename": os.getenv('TAXONOMY_APP_MODEL_FILENAME', 'taxonomy_model')
             },
             "WORKFLOW APP MODEL": {
-                "prefix": "wfm_", 
+                "prefix": os.getenv('WORKFLOW_APP_MODEL_PREFIX', 'wfm_'), 
                 "filename": os.getenv('WORKFLOW_APP_MODEL_FILENAME', 'workflow_model')
             },
             "INSTANCE DATA MODEL": {
-                "prefix": "ins_", 
+                "prefix": os.getenv('INSTANCE_DATA_MODEL_PREFIX', 'ins_'), 
                 "filename": os.getenv('INSTANCE_DATA_MODEL_FILENAME', 'instance_model')
             },
             "AUTHORIZATION MODEL": {
-                "prefix": "auth_", 
+                "prefix": os.getenv('AUTHORIZATION_MODEL_PREFIX', 'auth_'), 
                 "filename": os.getenv('AUTHORIZATION_MODEL_FILENAME', 'authorization_model')
             },
             "KNOWLEDGE DATA MODEL": {
-                "prefix": "kbm_", 
+                "prefix": os.getenv('KNOWLEDGE_DATA_MODEL_PREFIX', 'kbm_'), 
                 "filename": os.getenv('KNOWLEDGE_DATA_MODEL_FILENAME', 'knowledge_model')
             },
             "RS EXCEL": {
-                "prefix": "data_", 
+                "prefix": os.getenv('RS_EXCEL_PREFIX', 'data_'), 
                 "filename": os.getenv('RS_EXCEL_FILENAME', 'rs_excel_data')
             },
             "thing": {
-                "prefix": "thg_", 
+                "prefix": os.getenv('THING_MODEL_PREFIX', 'thg_'), 
                 "filename": os.getenv('THING_MODEL_FILENAME', 'thing_model')
             },
             "referenceData": {
-                "prefix": "ref_", 
+                "prefix": os.getenv('REFERENCEDATA_PREFIX', 'ref_'), 
                 "filename": os.getenv('REFERENCEDATA_FILENAME', 'reference_data')
             },
             "UOMData": {
-                "prefix": "uom_", 
+                "prefix": os.getenv('UOMDATA_PREFIX', 'uom_'), 
                 "filename": os.getenv('UOMDATA_FILENAME', 'uom_data')
             },
             "digitalAsset": {
-                "prefix": "dam_", 
+                "prefix": os.getenv('DIGITALASSET_PREFIX', 'dam_'), 
                 "filename": os.getenv('DIGITALASSET_FILENAME', 'digital_asset')
             },
         }
