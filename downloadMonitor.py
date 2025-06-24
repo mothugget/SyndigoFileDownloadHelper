@@ -140,9 +140,10 @@ class DownloadHandler(FileSystemEventHandler):
                             new_file_path = file_path.parent / new_filename
                         
                         if new_file_path.exists():
-                            # Add a suffix that won't trigger reprocessing
-                            timestamp_suffix = "_" + str(time.time())[-6:]
-                            new_file_path = add_suffix_to_filename(new_file_path, timestamp_suffix)
+                            # Rename existing file to _oldv1, _oldv2, etc.
+                            if not rename_existing_file_to_old_version(new_file_path):
+                                print(f"   ⚠️  Could not rename existing file. New file will not be processed.")
+                                return None
                         
                         file_path.rename(new_file_path)                        
                         print(f"Template name: {template_name}")
@@ -153,7 +154,10 @@ class DownloadHandler(FileSystemEventHandler):
                         print(f"Postfix: {postfix}")
                         print(f"New filename: {new_file_path.name}")
                         print(f"Replace mode: {replace_filename}")
-                        return str(new_file_path)  # Return new filename
+                        
+                        # Move to processed folder if specified
+                        final_file_path = move_to_processed_folder(new_file_path)
+                        return str(final_file_path)  # Return final filename
                 else:
                     print("   ❌ File doesn't match criteria (wrong extension or has prefix)")
 
@@ -263,6 +267,94 @@ def get_downloads_directory():
 
 def add_suffix_to_filename(path: Path, suffix: str = "1") -> Path:
     return path.with_name(f"{path.stem}{suffix}{path.suffix}")
+
+def is_file_locked(file_path: Path) -> bool:
+    """Check if a file is locked (open in another application)"""
+    try:
+        # Try to open the file in write mode
+        with open(file_path, 'r+b'):
+            pass
+        return False
+    except (IOError, OSError, PermissionError):
+        return True
+
+def rename_existing_file_to_old_version(file_path: Path):
+    """Rename existing file to next available _oldv# to keep newest file with original name"""
+    base_path = file_path.with_suffix('')  # Remove extension
+    extension = file_path.suffix
+    
+    # Check if file is locked (open in Excel/other app)
+    if is_file_locked(file_path):
+        print(f"🔒 File {file_path.name} is currently open in another application")
+        print(f"   Please save and close the file, then it will be automatically renamed")
+        
+        # Wait for file to be unlocked
+        max_attempts = 60  # Wait up to 5 minutes (60 * 5 seconds)
+        attempt = 0
+        
+        while is_file_locked(file_path) and attempt < max_attempts:
+            attempt += 1
+            print(f"   ⏳ Waiting for file to be closed... (attempt {attempt}/{max_attempts})")
+            time.sleep(5)  # Wait 5 seconds between checks
+        
+        if is_file_locked(file_path):
+            print(f"   ❌ Timeout: File still locked after 5 minutes. Skipping rename.")
+            print(f"   💡 Please close {file_path.name} manually and run the program again")
+            return False
+        else:
+            print(f"   ✅ File is now available for renaming")
+    
+    # Find the next available version number
+    version = 1
+    while True:
+        old_version_path = Path(f"{base_path}_oldv{version}{extension}")
+        if not old_version_path.exists():
+            break
+        version += 1
+    
+    try:
+        # Rename the current file to the next available _oldv#
+        old_version_path = Path(f"{base_path}_oldv{version}{extension}")
+        file_path.rename(old_version_path)
+        print(f"📋 Renamed existing {file_path.name} → {old_version_path.name}")
+        return True
+    except Exception as e:
+        print(f"❌ Error renaming file: {e}")
+        return False
+
+def move_to_processed_folder(file_path: Path) -> Path:
+    """Move processed file to the specified processed files directory if configured"""
+    processed_dir = os.getenv('PROCESSED_FILES_DIR', '').strip()
+    
+    if not processed_dir:
+        print("   📁 No processed files directory configured, keeping in place")
+        return file_path
+    
+    try:
+        processed_path = Path(processed_dir)
+        
+        # Create directory if it doesn't exist
+        processed_path.mkdir(parents=True, exist_ok=True)
+        
+        # Create destination path
+        destination = processed_path / file_path.name
+        
+        # Handle filename conflicts
+        if destination.exists():
+            if not rename_existing_file_to_old_version(destination):
+                print(f"   ⚠️  Could not rename existing file in processed folder. File will remain in downloads.")
+                return file_path
+        
+        # Move the file
+        shutil.move(str(file_path), str(destination))
+        print(f"📦 Moved processed file to: {destination}")
+        
+        return destination
+        
+    except Exception as e:
+        print(f"❌ Error moving file to processed folder: {e}")
+        print(f"   File remains at: {file_path}")
+        return file_path
 
 def poll_directory(downloads_dir):
     """Polling-based file monitoring for WSL compatibility"""
