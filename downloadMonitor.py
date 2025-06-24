@@ -26,6 +26,19 @@ class DownloadHandler(FileSystemEventHandler):
         print(f"🔔 File system event detected: {event.src_path}")
         print(f"   Event type: {'Directory' if event.is_directory else 'File'}")
         print(f"   Path exists: {os.path.exists(event.src_path)}")
+        
+        # Skip processing if this is a file we just processed (prevents infinite loops)
+        if not event.is_directory:
+            filename = Path(event.src_path).name
+            if filename in self.recently_processed:
+                print(f"   ⏭️  Skipping recently processed file: {filename}")
+                return
+        
+        # Skip if file doesn't exist (common on macOS due to rapid file operations)
+        if not event.is_directory and not os.path.exists(event.src_path):
+            print(f"   ⚠️  File no longer exists, skipping processing")
+            return
+            
         new_filename = self.process_file(event)
         if new_filename:
             print(f"📝 File renamed via watchdog: {event.src_path} -> {new_filename}")
@@ -105,20 +118,36 @@ class DownloadHandler(FileSystemEventHandler):
             # Only process files, not directories
             if not event.is_directory:
                 file_path = Path(event.src_path)
+                
+                # Double-check file exists before processing (race condition protection)
+                if not file_path.exists():
+                    print(f"📄 File no longer exists: {file_path.name}")
+                    print("-" * 50)
+                    return None
+                
                 file_extension = file_path.suffix.lower()
                 already_has_prefix=has_known_prefix(file_path.name,MODEL_CONFIGS)
                 
                 # Skip files that contain timestamp suffixes (already processed)
                 has_timestamp_suffix = "_" in file_path.stem and file_path.stem.split("_")[-1].isdigit()
                 
+                # Skip _oldv files created during rename process
+                has_oldv_suffix = "_oldv" in file_path.stem
+                
                 print(f"📄 Processing file: {file_path.name}")
                 print(f"   Extension: {file_extension}")
                 print(f"   Has prefix: {already_has_prefix}")
                 print(f"   Has timestamp suffix: {has_timestamp_suffix}")
+                print(f"   Has oldv suffix: {has_oldv_suffix}")
                 
-                if  file_extension in [".xlsx",".xlsm"] and not already_has_prefix and not has_timestamp_suffix:
+                if  file_extension in [".xlsx",".xlsm"] and not already_has_prefix and not has_timestamp_suffix and not has_oldv_suffix:
                     print("   ✅ File matches criteria, processing...")
-                    wb=load_workbook(file_path)
+                    try:
+                        wb=load_workbook(file_path)
+                    except FileNotFoundError:
+                        print(f"   ⚠️  File disappeared during processing: {file_path.name}")
+                        print("-" * 50)
+                        return None
                     ws=wb.active
                     template_name=str(ws['b4'].value)
                     domain_name=str(ws['b8'].value)
