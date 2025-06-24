@@ -1,5 +1,6 @@
 import os
 import time
+import platform
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -270,6 +271,10 @@ def add_suffix_to_filename(path: Path, suffix: str = "1") -> Path:
 
 def is_file_locked(file_path: Path) -> bool:
     """Check if a file is locked (open in another application)"""
+    # Skip file locking check on macOS due to compatibility issues
+    if platform.system() == 'Darwin':
+        return False
+    
     try:
         # Try to open the file in write mode
         with open(file_path, 'r+b'):
