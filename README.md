@@ -57,6 +57,26 @@
    python3 downloadMonitor.py
    ```
 
+## File Versioning
+
+When a file with the same name already exists, the system uses smart versioning:
+
+- **New file keeps the original name** (e.g., `gov_model.xlsx`)
+- **Existing files get numbered versions** (e.g., `gov_model_oldv1.xlsx`, `gov_model_oldv2.xlsx`)
+- **Old versions keep their names** - no shifting or renaming of previous versions
+
+**Example sequence:**
+1. First download: `model.xlsx`
+2. Second download: `model_oldv1.xlsx`, `model.xlsx` (newest)
+3. Third download: `model_oldv1.xlsx`, `model_oldv2.xlsx`, `model.xlsx` (newest)
+
+**File Lock Handling:**
+If a file is open in Excel or another application:
+- System detects the lock and shows a message
+- Waits up to 5 minutes for you to save and close the file
+- Automatically proceeds once the file is available
+- If timeout occurs, processing is skipped with a helpful message
+
 ## Requirements
 
 - Python 3.x
