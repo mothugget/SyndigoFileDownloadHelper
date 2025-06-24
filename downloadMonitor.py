@@ -167,16 +167,17 @@ class DownloadHandler(FileSystemEventHandler):
                     if model_name!="":
                         replace_filename = os.getenv('REPLACE_FILENAME', 'false').lower() == 'true'
                         prefix = MODEL_CONFIGS[model_name]["prefix"]
+                        global_prefix = os.getenv('GLOBAL_PREFIX', '')
                         postfix = os.getenv('FILENAME_POSTFIX', '')
                         
                         if replace_filename:
-                            # Replace entire filename with custom name (no prefix)
+                            # Replace entire filename with custom name (with global prefix)
                             custom_filename = MODEL_CONFIGS[model_name]["filename"]
-                            new_file_path = file_path.parent / (custom_filename + postfix + file_path.suffix)
+                            new_file_path = file_path.parent / (global_prefix + custom_filename + postfix + file_path.suffix)
                         else:
-                            # Add prefix to existing filename
+                            # Add prefix to existing filename (with global prefix)
                             base_name = file_path.stem  # filename without extension
-                            new_filename = prefix + base_name + postfix + file_path.suffix
+                            new_filename = global_prefix + prefix + base_name + postfix + file_path.suffix
                             new_file_path = file_path.parent / new_filename
                         
                         if new_file_path.exists():
@@ -190,7 +191,8 @@ class DownloadHandler(FileSystemEventHandler):
                         if base_model:
                             print(f"Domain name: {domain_name}")
                             disable_window_protection_in_sheetview(new_file_path)
-                        print(f"Prefix: {prefix}")
+                        print(f"Global prefix: {global_prefix}")
+                        print(f"Model prefix: {prefix}")
                         print(f"Postfix: {postfix}")
                         print(f"New filename: {new_file_path.name}")
                         print(f"Replace mode: {replace_filename}")
