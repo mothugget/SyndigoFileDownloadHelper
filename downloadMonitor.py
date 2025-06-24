@@ -188,7 +188,7 @@ class DownloadHandler(FileSystemEventHandler):
                         
                         file_path.rename(new_file_path)                        
                         print(f"Template name: {template_name}")
-                        if base_model:
+                        if file_extension==".xlsx":
                             print(f"Domain name: {domain_name}")
                             disable_window_protection_in_sheetview(new_file_path)
                         print(f"Global prefix: {global_prefix}")
