@@ -18,6 +18,10 @@ except ImportError:
 
 
 class DownloadHandler(FileSystemEventHandler):
+    def __init__(self):
+        super().__init__()
+        self.recently_processed = set()  # Track recently processed files to avoid loops
+        
     def on_created(self, event):
         print(f"🔔 File system event detected: {event.src_path}")
         print(f"   Event type: {'Directory' if event.is_directory else 'File'}")
@@ -31,6 +35,12 @@ class DownloadHandler(FileSystemEventHandler):
         
     def on_moved(self, event):
         print(f"📦 File moved: {event.src_path} -> {event.dest_path}")
+        # Skip processing if this is a file we just renamed (prevents infinite loops)
+        dest_filename = Path(event.dest_path).name
+        if dest_filename in self.recently_processed:
+            print(f"   ⏭️  Skipping recently processed file: {dest_filename}")
+            return
+            
         # Process the destination file if it's a complete download
         if not event.is_directory and event.dest_path.endswith('.xlsx'):
             # Create a mock event for the destination file
@@ -158,6 +168,16 @@ class DownloadHandler(FileSystemEventHandler):
                         
                         # Move to processed folder if specified
                         final_file_path = move_to_processed_folder(new_file_path)
+                        
+                        # Track the processed file to prevent infinite loops
+                        self.recently_processed.add(final_file_path.name)
+                        
+                        # Clean up old entries periodically (keep last 100 processed files)
+                        if len(self.recently_processed) > 100:
+                            oldest_entries = list(self.recently_processed)[:50]
+                            for entry in oldest_entries:
+                                self.recently_processed.discard(entry)
+                        
                         return str(final_file_path)  # Return final filename
                 else:
                     print("   ❌ File doesn't match criteria (wrong extension or has prefix)")
