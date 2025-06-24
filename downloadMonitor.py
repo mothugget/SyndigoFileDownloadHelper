@@ -102,8 +102,8 @@ class DownloadHandler(FileSystemEventHandler):
                 "filename": os.getenv('THING_MODEL_FILENAME', 'thing_model')
             },
             "referenceData": {
-                "prefix": os.getenv('REFERENCEDATA_PREFIX', 'ref_'), 
-                "filename": os.getenv('REFERENCEDATA_FILENAME', 'reference_data')
+                "prefix": os.getenv('REFERENCE_MODEL_PREFIX', 'ref_'), 
+                "filename": os.getenv('REFERENCE_MODEL_FILENAME', 'reference_model')
             },
             "UOMData": {
                 "prefix": os.getenv('UOMDATA_PREFIX', 'uom_'), 
