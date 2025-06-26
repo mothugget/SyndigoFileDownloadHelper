@@ -112,7 +112,7 @@ class DownloadHandler(FileSystemEventHandler):
             },
             "digitalAsset": {
                 "prefix": os.getenv('DIGITALASSET_PREFIX', 'dam_'), 
-                "filename": os.getenv('DIGITALASSET_FILENAME', 'digital_asset')
+                "filename": os.getenv('DIGITALASSET_MODEL_FILENAME', 'digital_asset')
             },
         }
         try:
