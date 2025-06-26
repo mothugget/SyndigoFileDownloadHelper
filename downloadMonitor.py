@@ -1,6 +1,7 @@
 import os
 import time
 import platform
+import argparse
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -386,6 +387,8 @@ def move_to_processed_folder(file_path: Path) -> Path:
         print("   📁 No processed files directory configured, keeping in place")
         return file_path
     
+    print(f"   📁 Processed files directory: {processed_dir}")
+    
     try:
         processed_path = Path(processed_dir)
         
@@ -411,6 +414,24 @@ def move_to_processed_folder(file_path: Path) -> Path:
         print(f"❌ Error moving file to processed folder: {e}")
         print(f"   File remains at: {file_path}")
         return file_path
+
+def load_override_env(override_file_path):
+    """Load environment variables from an override file and update os.environ"""
+    if not os.path.exists(override_file_path):
+        print(f"❌ Override file not found: {override_file_path}")
+        return False
+    
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(override_file_path, override=True)
+        print(f"✅ Loaded override environment variables from: {override_file_path}")
+        return True
+    except ImportError:
+        print("❌ python-dotenv not installed. Cannot load override file.")
+        return False
+    except Exception as e:
+        print(f"❌ Error loading override file: {e}")
+        return False
 
 def poll_directory(downloads_dir):
     """Polling-based file monitoring for WSL compatibility"""
@@ -481,6 +502,15 @@ def poll_directory(downloads_dir):
         print("\n🛑 Stopping polling monitor...")
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Monitor downloads directory for file processing')
+    parser.add_argument('--override-env', type=str, help='Path to override .env file (e.g., .env.overwrite)')
+    args = parser.parse_args()
+    
+    # Load override environment variables if specified
+    if args.override_env:
+        load_override_env(args.override_env)
+    
     downloads_dir = get_downloads_directory().strip('"\'')
     
     print(f"Testing path: {downloads_dir}")

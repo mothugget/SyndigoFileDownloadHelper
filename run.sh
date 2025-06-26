@@ -37,7 +37,7 @@ fi
 
 # Run the program
 echo "Starting download monitor..."
-python downloadMonitor.py
+python downloadMonitor.py "$@"
 
 echo "Press any key to continue..."
 read -n 1
