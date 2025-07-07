@@ -193,7 +193,7 @@ class DownloadHandler(FileSystemEventHandler):
                         
                         if replace_filename:
                             # Replace entire filename with custom name (with global prefix)
-                            custom_filename = MODEL_CONFIGS[model_name]["filename"]
+                            custom_filename = str(MODEL_CONFIGS[model_name]["filename"])+tenant_name_or_empty
                             new_file_path = file_path.parent / (global_prefix + custom_filename + postfix + file_path.suffix)
                         else:
                             # Add prefix to existing filename (with global prefix)
