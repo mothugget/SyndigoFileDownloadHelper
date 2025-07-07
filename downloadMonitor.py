@@ -70,6 +70,8 @@ class DownloadHandler(FileSystemEventHandler):
     def process_file(self, event):
         """Process a file and return the new filename if renamed, None otherwise"""
         REMOVE_TENANT_ID=os.getenv('REMOVE_TENANT_ID',False)
+        TENANT_NAME_PREFIX=os.getenv('TENANT_NAME_PREFIX',False)
+        tenant_name_or_empty=""
         MODEL_CONFIGS = {
             "GOVERNANCE MODEL": {
                 "prefix": os.getenv('GOVERNANCE_MODEL_PREFIX', 'gov_'), 
@@ -155,27 +157,37 @@ class DownloadHandler(FileSystemEventHandler):
                         print("-" * 50)
                         return None
                     ws=wb['METADATA']
-                    if ws['A7'].value == 'TENANT' and REMOVE_TENANT_ID:
-                        ws['B7'].value = None
-                        wb.save(file_path)
+                    tenant_specific=False
+                    tenant_row=0
+                    for row in ws.iter_rows(min_col=1, max_col=1):  # Only column A
+                        cell = row[0]
+                        if cell.value == 'TENANT':
+                            tenant_specific=True
+                            tenant_row=cell.row
+                            break  # Stop after first match
+                    if tenant_specific:
+                        tenant_value_cell="B"+str(tenant_row)
+                        if TENANT_NAME_PREFIX:    
+                            tenant_name_or_empty=str(ws[tenant_value_cell].value)+"_"
+                        if REMOVE_TENANT_ID:
+                            ws[tenant_value_cell].value = None
+                            wb.save(file_path)
                     template_name=str(ws['b4'].value)
                     domain_name=str(ws['b8'].value)
                     model_name=""
                     prefix=""
                     new_file_path=""
-                    base_model=False
 
                     if template_name in MODEL_CONFIGS:
                         model_name=template_name
                     elif domain_name in MODEL_CONFIGS:
                         model_name=domain_name
-                        base_model=True
 
                     print(f"New file detected: {file_path.name}")
 
                     if model_name!="":
                         replace_filename = os.getenv('REPLACE_FILENAME', 'false').lower() == 'true'
-                        prefix = MODEL_CONFIGS[model_name]["prefix"]
+                        prefix = str(MODEL_CONFIGS[model_name]["prefix"])+tenant_name_or_empty
                         global_prefix = os.getenv('GLOBAL_PREFIX', '')
                         postfix = os.getenv('FILENAME_POSTFIX', '')
                         
