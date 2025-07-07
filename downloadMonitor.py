@@ -1,6 +1,7 @@
 import os
 import time
 import platform
+import argparse
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -90,6 +91,10 @@ class DownloadHandler(FileSystemEventHandler):
                 "prefix": os.getenv('AUTHORIZATION_MODEL_PREFIX', 'auth_'), 
                 "filename": os.getenv('AUTHORIZATION_MODEL_FILENAME', 'authorization_model')
             },
+            "DYNAMIC AUTHORIZATION MODEL": {
+                "prefix": os.getenv('DYNAMIC_AUTHORIZATION_MODEL_PREFIX', 'dauth_'), 
+                "filename": os.getenv('DYNAMIC_AUTHORIZATION_MODEL_FILENAME', 'dynamic_authorization_model')
+            },
             "KNOWLEDGE DATA MODEL": {
                 "prefix": os.getenv('KNOWLEDGE_DATA_MODEL_PREFIX', 'kbm_'), 
                 "filename": os.getenv('KNOWLEDGE_DATA_MODEL_FILENAME', 'knowledge_model')
@@ -103,8 +108,8 @@ class DownloadHandler(FileSystemEventHandler):
                 "filename": os.getenv('THING_MODEL_FILENAME', 'thing_model')
             },
             "referenceData": {
-                "prefix": os.getenv('REFERENCEDATA_PREFIX', 'ref_'), 
-                "filename": os.getenv('REFERENCEDATA_FILENAME', 'reference_data')
+                "prefix": os.getenv('REFERENCE_MODEL_PREFIX', 'ref_'), 
+                "filename": os.getenv('REFERENCE_MODEL_FILENAME', 'reference_model')
             },
             "UOMData": {
                 "prefix": os.getenv('UOMDATA_PREFIX', 'uom_'), 
@@ -112,7 +117,7 @@ class DownloadHandler(FileSystemEventHandler):
             },
             "digitalAsset": {
                 "prefix": os.getenv('DIGITALASSET_PREFIX', 'dam_'), 
-                "filename": os.getenv('DIGITALASSET_FILENAME', 'digital_asset')
+                "filename": os.getenv('DIGITALASSET_MODEL_FILENAME', 'digital_asset')
             },
         }
         try:
@@ -390,6 +395,8 @@ def move_to_processed_folder(file_path: Path) -> Path:
         print("   📁 No processed files directory configured, keeping in place")
         return file_path
     
+    print(f"   📁 Processed files directory: {processed_dir}")
+    
     try:
         processed_path = Path(processed_dir)
         
@@ -415,6 +422,24 @@ def move_to_processed_folder(file_path: Path) -> Path:
         print(f"❌ Error moving file to processed folder: {e}")
         print(f"   File remains at: {file_path}")
         return file_path
+
+def load_override_env(override_file_path):
+    """Load environment variables from an override file and update os.environ"""
+    if not os.path.exists(override_file_path):
+        print(f"❌ Override file not found: {override_file_path}")
+        return False
+    
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(override_file_path, override=True)
+        print(f"✅ Loaded override environment variables from: {override_file_path}")
+        return True
+    except ImportError:
+        print("❌ python-dotenv not installed. Cannot load override file.")
+        return False
+    except Exception as e:
+        print(f"❌ Error loading override file: {e}")
+        return False
 
 def poll_directory(downloads_dir):
     """Polling-based file monitoring for WSL compatibility"""
@@ -485,6 +510,15 @@ def poll_directory(downloads_dir):
         print("\n🛑 Stopping polling monitor...")
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Monitor downloads directory for file processing')
+    parser.add_argument('--override-env', type=str, help='Path to override .env file (e.g., .env.overwrite)')
+    args = parser.parse_args()
+    
+    # Load override environment variables if specified
+    if args.override_env:
+        load_override_env(args.override_env)
+    
     downloads_dir = get_downloads_directory().strip('"\'')
     
     print(f"Testing path: {downloads_dir}")

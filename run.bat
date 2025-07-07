@@ -39,6 +39,6 @@ if errorlevel 1 (
 
 REM Run the program
 echo Starting download monitor...
-python downloadMonitor.py
+python downloadMonitor.py %*
 
 pause
