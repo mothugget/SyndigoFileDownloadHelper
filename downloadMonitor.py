@@ -168,7 +168,7 @@ class DownloadHandler(FileSystemEventHandler):
                     if tenant_specific:
                         tenant_value_cell="B"+str(tenant_row)
                         if TENANT_NAME_PREFIX:    
-                            tenant_name_or_empty=str(ws[tenant_value_cell].value)+"_"
+                            tenant_name_or_empty=str(ws[tenant_value_cell].value)
                         if REMOVE_TENANT_ID:
                             ws[tenant_value_cell].value = None
                             wb.save(file_path)
@@ -187,13 +187,13 @@ class DownloadHandler(FileSystemEventHandler):
 
                     if model_name!="":
                         replace_filename = os.getenv('REPLACE_FILENAME', 'false').lower() == 'true'
-                        prefix = str(MODEL_CONFIGS[model_name]["prefix"])+tenant_name_or_empty
+                        prefix = str(MODEL_CONFIGS[model_name]["prefix"])+f"{tenant_name_or_empty}_" if tenant_name_or_empty else ""
                         global_prefix = os.getenv('GLOBAL_PREFIX', '')
                         postfix = os.getenv('FILENAME_POSTFIX', '')
                         
                         if replace_filename:
                             # Replace entire filename with custom name (with global prefix)
-                            custom_filename = str(MODEL_CONFIGS[model_name]["filename"])+tenant_name_or_empty
+                            custom_filename = str(MODEL_CONFIGS[model_name]["filename"])+f"_{tenant_name_or_empty}" if tenant_name_or_empty else ""
                             new_file_path = file_path.parent / (global_prefix + custom_filename + postfix + file_path.suffix)
                         else:
                             # Add prefix to existing filename (with global prefix)
