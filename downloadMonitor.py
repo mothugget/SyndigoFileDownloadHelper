@@ -68,6 +68,7 @@ class DownloadHandler(FileSystemEventHandler):
         
     def process_file(self, event):
         """Process a file and return the new filename if renamed, None otherwise"""
+        REMOVE_TENANT_ID=os.getenv('REMOVE_TENANT_ID',False)
         MODEL_CONFIGS = {
             "GOVERNANCE MODEL": {
                 "prefix": os.getenv('GOVERNANCE_MODEL_PREFIX', 'gov_'), 
@@ -148,7 +149,10 @@ class DownloadHandler(FileSystemEventHandler):
                         print(f"   ⚠️  File disappeared during processing: {file_path.name}")
                         print("-" * 50)
                         return None
-                    ws=wb.active
+                    ws=wb['METADATA']
+                    if ws['A7'].value == 'TENANT' and REMOVE_TENANT_ID:
+                        ws['B7'].value = None
+                        wb.save(file_path)
                     template_name=str(ws['b4'].value)
                     domain_name=str(ws['b8'].value)
                     model_name=""
