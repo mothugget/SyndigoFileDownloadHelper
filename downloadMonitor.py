@@ -90,6 +90,10 @@ class DownloadHandler(FileSystemEventHandler):
                 "prefix": os.getenv('AUTHORIZATION_MODEL_PREFIX', 'auth_'), 
                 "filename": os.getenv('AUTHORIZATION_MODEL_FILENAME', 'authorization_model')
             },
+            "DYNAMIC AUTHORIZATION MODEL": {
+                "prefix": os.getenv('DYNAMIC_AUTHORIZATION_MODEL_PREFIX', 'dauth_'), 
+                "filename": os.getenv('DYNAMIC_AUTHORIZATION_MODEL_FILENAME', 'dynamic_authorization_model')
+            },
             "KNOWLEDGE DATA MODEL": {
                 "prefix": os.getenv('KNOWLEDGE_DATA_MODEL_PREFIX', 'kbm_'), 
                 "filename": os.getenv('KNOWLEDGE_DATA_MODEL_FILENAME', 'knowledge_model')
