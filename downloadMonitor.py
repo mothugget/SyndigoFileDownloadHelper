@@ -151,7 +151,10 @@ class DownloadHandler(FileSystemEventHandler):
                 if  file_extension in [".xlsx",".xlsm"] and not already_has_prefix and not has_timestamp_suffix and not has_oldv_suffix:
                     print("   ✅ File matches criteria, processing...")
                     try:
-                        wb=load_workbook(file_path)
+                        if file_extension==".xlsm":
+                            wb=load_workbook(file_path, keep_vba=True)
+                        else:
+                            wb=load_workbook(file_path)
                     except FileNotFoundError:
                         print(f"   ⚠️  File disappeared during processing: {file_path.name}")
                         print("-" * 50)
