@@ -1,4 +1,5 @@
 import os
+import traceback
 import time
 import platform
 import argparse
@@ -159,15 +160,24 @@ class DownloadHandler(FileSystemEventHandler):
                         print(f"   ⚠️  File disappeared during processing: {file_path.name}")
                         print("-" * 50)
                         return None
-                    ws=wb['METADATA']
+                    ws = wb['METADATA'] if 'METADATA' in wb.sheetnames else wb['Help']
                     tenant_specific=False
-                    tenant_row=0
+                    template_row=False
+                    domain_row=False
+                    tenant_row=False
                     for row in ws.iter_rows(min_col=1, max_col=1):  # Only column A
                         cell = row[0]
-                        if cell.value == 'TENANT':
-                            tenant_specific=True
-                            tenant_row=cell.row
-                            break  # Stop after first match
+                        match cell.value:                                                        
+                            case 'TEMPLATE NAME':
+                                template_row=cell.row
+                            case 'DOMAIN':
+                                domain_row=cell.row
+                            case 'TENANT':
+                                tenant_specific=True
+                                tenant_row=cell.row
+                    template_name=str(ws['b'+str(template_row)].value) if template_row else ""
+                    print(template_name)
+                    domain_name=str(ws['b'+str(domain_row)].value) if domain_row else ""                            
                     if tenant_specific:
                         tenant_value_cell="B"+str(tenant_row)
                         if TENANT_NAME_PREFIX:    
@@ -175,28 +185,23 @@ class DownloadHandler(FileSystemEventHandler):
                         if REMOVE_TENANT_ID:
                             ws[tenant_value_cell].value = None
                             wb.save(file_path)
-                    template_name=str(ws['b4'].value)
-                    domain_name=str(ws['b8'].value)
                     model_name=""
                     prefix=""
                     new_file_path=""
-
                     if template_name in MODEL_CONFIGS:
                         model_name=template_name
                     elif domain_name in MODEL_CONFIGS:
                         model_name=domain_name
 
                     print(f"New file detected: {file_path.name}")
-
                     if model_name!="":
                         replace_filename = os.getenv('REPLACE_FILENAME', 'false').lower() == 'true'
-                        prefix = str(MODEL_CONFIGS[model_name]["prefix"])+f"{tenant_name_or_empty}_" if tenant_name_or_empty else ""
+                        prefix = str(MODEL_CONFIGS[model_name]["prefix"])+(f"{tenant_name_or_empty}_" if tenant_name_or_empty else "")
                         global_prefix = os.getenv('GLOBAL_PREFIX', '')
                         postfix = os.getenv('FILENAME_POSTFIX', '')
-                        
                         if replace_filename:
                             # Replace entire filename with custom name (with global prefix)
-                            custom_filename = str(MODEL_CONFIGS[model_name]["filename"])+f"_{tenant_name_or_empty}" if tenant_name_or_empty else ""
+                            custom_filename = str(MODEL_CONFIGS[model_name]["filename"])+(f"_{tenant_name_or_empty}" if tenant_name_or_empty else "")
                             new_file_path = file_path.parent / (global_prefix + custom_filename + postfix + file_path.suffix)
                         else:
                             # Add prefix to existing filename (with global prefix)
@@ -241,8 +246,7 @@ class DownloadHandler(FileSystemEventHandler):
                 return None  # No file was renamed
 
         except Exception as e:
-            print("some file caused some error")
-            print(e)
+            print(50*"-"+"\n\n"+f"Some error occurred:\n\n{e}\n{traceback.format_exc()}")
             return None
 
 def disable_window_protection_in_sheetview(xlsx_path):
