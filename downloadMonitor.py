@@ -70,8 +70,8 @@ class DownloadHandler(FileSystemEventHandler):
         
     def process_file(self, event):
         """Process a file and return the new filename if renamed, None otherwise"""
-        REMOVE_TENANT_ID=os.getenv('REMOVE_TENANT_ID',False)
-        TENANT_NAME_PREFIX=os.getenv('TENANT_NAME_PREFIX',False)
+        REMOVE_TENANT_ID=os.getenv('REMOVE_TENANT_ID')=='true'  
+        TENANT_NAME_PREFIX=os.getenv('TENANT_NAME_PREFIX')=='true'
         tenant_name_or_empty=""
         MODEL_CONFIGS = {
             "GOVERNANCE MODEL": {
