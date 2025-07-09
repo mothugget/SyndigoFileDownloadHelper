@@ -176,7 +176,6 @@ class DownloadHandler(FileSystemEventHandler):
                                 tenant_specific=True
                                 tenant_row=cell.row
                     template_name=str(ws['b'+str(template_row)].value) if template_row else ""
-                    print(template_name)
                     domain_name=str(ws['b'+str(domain_row)].value) if domain_row else ""                            
                     if tenant_specific:
                         tenant_value_cell="B"+str(tenant_row)
